@@ -1,0 +1,4 @@
+*.saves
+*debug.txt
+*debug_archive.txt
+autobackups/**
