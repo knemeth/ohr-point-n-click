@@ -17,3 +17,4 @@ If you are a contributor to this repository, please adhere to the following:
 * When you push, make a pull request. 
 * Report any Issue you find, especially if you're not the one who will address it.
 * Commit often and make commit messages descriptive and meaningful.
+* Do not, for the love of god, edit the .gitignore file without telling everyone.
