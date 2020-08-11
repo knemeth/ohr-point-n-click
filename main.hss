@@ -1,0 +1,147 @@
+# OHR Community Point & Click Adventure
+# main.hss
+# created by kylekrack
+
+globalVariable, begin
+    0,lmbDown
+    1,rmbDown
+    2,lmbUp
+    3,rmbUp
+    4,escPress
+    5,gameIsRunning
+    6,paused
+    7,hud
+    8,interactCol           # Per-map slice collection that has interactive slices like Look and Door
+    9,actionState
+    10,destinationMarker     # To be replaced with a lookup code
+end
+
+defineConstant, begin
+    # Action States - player can choose whether their click means a look, walk, etc. 
+    0,state:walk
+    1,state:look
+    2,state:use
+    3,state:talk
+end
+
+plotscript, keypressHandler, begin
+    # Gets and processes all button presses
+    # Mouse Buttons
+    if(mouseRelease(leftButton)) then(
+        lmbUp := true
+    )
+    if(mouseRelease(rightButton)) then(
+        rmbUp := true
+    )
+    if(mouseButton(leftButton)) then(
+        lmbDown := true
+    )
+    if(mouseButton(rightButton)) then(
+        rmbDown := true
+    )
+    
+    # Keyboard
+    if(keypress(key:esc)) then(
+        escPress := true
+    )
+end
+
+plotscript, newGame, begin
+    # Run when the game is run, initializes things like the mouse and hud
+    # Initializations
+    suspendPlayer
+    initMouse
+    gameIsRunning := true
+    hud := loadSliceCollection(0)
+    mainGameLoop
+end
+
+script, mainGameLoop, begin
+    # Runs every in-game tick, calls to functions from outside this file
+    variable(x, y, sl)
+   
+    while(gameIsRunning) do(
+        x := mousePixelX, y := mousePixelY
+        # Mouse Hover
+        mouseHover(x, y)
+        
+        # Check Paused: everything after this will be skipped if game is paused
+        if(paused) then(
+            resetInputs()
+            wait
+            continue
+        )
+        
+        # Pause Skip Line
+        # ---------------------------
+        
+        # Mouse Controls
+        if(lmbDown) then(
+            # Events when lmb clicked down
+            # Moving Player
+            sl := sliceAtPixel(hud, x, y, 0, true, true) # Only get visible slices for HUD
+            if(sl == false) then(
+                # Not clicking on the hud, therefore clicking on the map
+                switch(actionState) do(
+                    case(state:walk) do(
+                        x := mousePixelX -- heroPixelX(me)
+                        y := mousePixelY -- heroPixelY(me)
+                        clickMovePlayer(x, y)
+                    )
+                    case(state:look) do(
+                        sl := sliceAtPixel(interactCol, x, y, 0, true, false) # Find interactive slice
+                        if(getLookupCode(sl) == sli:look) then(
+                            # Look at thing
+                        ) else(
+                            # Nothing to Look at
+                        )
+                    )
+                    case(state:use) do(
+                        sl := sliceAtPixel(lookupSlice(sl:maproot), x, y, 0, true, false) # Find interactive slice
+                    )
+                )
+                
+            )
+            # Look Spots
+            elseif(getSliceLookup(sliceAtPixel()))
+        ) elseif(lmbUp) then(
+            # Events when lmb lifted
+            # HUD interactions
+            sl := sliceAtPixel(hud, x, y, 0, true, true) # Only get visible slices for HUD
+        ) elseif(rmbDown) then(
+            # Events when rmb clicked down
+            
+        ) elseif(rmbUp) then(
+            # Events when rmb lifted
+            
+        )
+        
+        # Destination Marker: Circle that shows where player is moving
+        if(destinationMarker && sliceIsMoving(getHeroSlice(me)) == false) then(
+            freeSlice(destinationMarker)
+            destinationMarker := 0
+        )
+        
+        # Doors
+        
+        
+        resetInputs()
+       
+        wait
+    )
+    
+    subscript, resetInputs, begin
+        lmbDown := false
+        rmbDown := false
+        lmbUp := false
+        rmbUp := false
+        escPress := false
+    end
+end
+
+plotscript, mapAutorun, col, begin
+    # The default map autorun script. Special autorun scripts should call this one
+    # col is the interactive slice collection to load for this map
+    if(interactCol) then(freeSlice(interactCol))
+    interactCol := loadSliceCollection(col)
+end

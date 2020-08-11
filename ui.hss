@@ -1,0 +1,11 @@
+# OHR Community Point & Click Adventure
+# ui.hss
+# created by kylekrack
+
+script, mouseHover, x, y, begin
+    # Checks to see if the mouse is hovering over any slice that should change
+    # as a result of being hovered over: eg. menu buttons, interactive objects
+    variable(sl) 
+    
+    sl :=
+end

@@ -8,6 +8,7 @@
 # * Do not use Tab characters. Indents should be 4 spaces long
 # * Do not alter a script someone else has written without their knowledge & consent
 # * Avoid making lines more than 80 characters long
+# * Comments can extend past 80 chars if appearing in-line after a script command
 
 # 1. camelCase
 # When writing names of variables, scripts, or script commands, use camelCase:

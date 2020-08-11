@@ -1,0 +1,11 @@
+# OHR Community Point & Click Adventure
+# movement.hss
+# created by kylekrack
+
+script, clickMovePlayer, x, y, begin
+    moveSliceWithWallchecking(getHeroSlice(me), x, y)
+    # Create a circle marker at the destination
+    if(destinationMarker) then(freeSlice(destinationMarker))
+    destinationMarker := createEllipse(10, 10, 255)
+    putSlice(destinationMarker, mousePixelX--5, mousePixelY--5)
+end
