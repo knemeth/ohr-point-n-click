@@ -3,9 +3,36 @@
 # created by kylekrack
 
 script, clickMovePlayer, x, y, begin
-    moveSliceWithWallchecking(getHeroSlice(me), x, y)
+    # Moves the player towards the target location
+    # Will not pathfind around walls, simply move towards the target
+    movePlayer(x, y)
     # Create a circle marker at the destination
     if(destinationMarker) then(freeSlice(destinationMarker))
     destinationMarker := createEllipse(10, 10, 255)
     putSlice(destinationMarker, mousePixelX--5, mousePixelY--5)
+end
+
+script, movePlayer, x, y, begin
+    # Moves the player towards a target destination by move:speed pixels
+    variable(horiz, vert)
+    # Set moving left or right
+    if(x < 0) then(horiz := 0--move:speed) # moving left
+    elseif(x > 0) then(horiz := move:speed) # moving right
+    # Otherwise, horiz is 0
+    if(y < 0) then(vert := 0--move:speed) # moving up
+    elseif(y > 0) then(vert := move:speed) # moving down
+    # Otherwise, vert is 0
+    moveSliceWithWallchecking(getHeroSlice(me), horiz, vert, move:friction)
+    updateNPCOrHeroFromSlice(getHeroSlice(me)) # Uses putHero to force player in right spot
+end
+
+script, updateNpcOrHeroFromSlice, sl, begin
+    # Uses putHero to force an NPC or Hero to be on the correct position
+    # as their slice dictates
+    variable (who)
+    
+    who := heroRankFromSlice(sl)
+    if (who > -1) then (putHero(who, sliceX(sl), sliceY(sl)))
+    who := npcReferenceFromSlice(sl)
+    if (who <> 0) then (putNpc(who, sliceX(sl), sliceY(sl)))
 end

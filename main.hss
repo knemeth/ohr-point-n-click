@@ -2,6 +2,9 @@
 # main.hss
 # created by kylekrack
 
+include, movement.hss
+include, ui.hss
+
 globalVariable, begin
     0,lmbDown
     1,rmbDown
@@ -22,6 +25,9 @@ defineConstant, begin
     1,state:look
     2,state:use
     3,state:talk
+    # Movement values
+    4,move:speed
+    0,move:friction
 end
 
 plotscript, keypressHandler, begin
@@ -51,6 +57,7 @@ plotscript, newGame, begin
     # Initializations
     suspendPlayer
     initMouse
+    unhideMouseCursor
     gameIsRunning := true
     hud := loadSliceCollection(0)
     mainGameLoop
@@ -58,7 +65,10 @@ end
 
 script, mainGameLoop, begin
     # Runs every in-game tick, calls to functions from outside this file
-    variable(x, y, sl)
+    variable(x, y, sl, oldPlayerX, oldPlayerY)
+    # Init old position to -1, to indicate no movement has ocurred
+    oldPlayerX := -1
+    oldPlayerY := -1
    
     while(gameIsRunning) do(
         x := mousePixelX, y := mousePixelY
@@ -77,53 +87,43 @@ script, mainGameLoop, begin
         
         # Mouse Controls
         if(lmbDown) then(
-            # Events when lmb clicked down
-            # Moving Player
-            sl := sliceAtPixel(hud, x, y, 0, true, true) # Only get visible slices for HUD
-            if(sl == false) then(
-                # Not clicking on the hud, therefore clicking on the map
-                switch(actionState) do(
-                    case(state:walk) do(
-                        x := mousePixelX -- heroPixelX(me)
-                        y := mousePixelY -- heroPixelY(me)
-                        clickMovePlayer(x, y)
-                    )
-                    case(state:look) do(
-                        sl := sliceAtPixel(interactCol, x, y, 0, true, false) # Find interactive slice
-                        if(getLookupCode(sl) == sli:look) then(
-                            # Look at thing
-                        ) else(
-                            # Nothing to Look at
-                        )
-                    )
-                    case(state:use) do(
-                        sl := sliceAtPixel(lookupSlice(sl:maproot), x, y, 0, true, false) # Find interactive slice
-                    )
-                )
-                
-            )
-            # Look Spots
-            elseif(getSliceLookup(sliceAtPixel()))
+            # Events when lmb clicked down:
+            # * Click to Move
+            lmbDownActions(x, y)
         ) elseif(lmbUp) then(
-            # Events when lmb lifted
-            # HUD interactions
-            sl := sliceAtPixel(hud, x, y, 0, true, true) # Only get visible slices for HUD
+            # Events when lmb lifted:
+            # * Look at something
+            # * Use item on something
+            lmbUpActions(x, y)
         ) elseif(rmbDown) then(
-            # Events when rmb clicked down
-            
+            # Events when rmb clicked down:
+            rmbDownActions(x, y)
         ) elseif(rmbUp) then(
-            # Events when rmb lifted
-            
+            # Events when rmb lifted:
+            rmbUpActions(x, y)
         )
         
-        # Destination Marker: Circle that shows where player is moving
-        if(destinationMarker && sliceIsMoving(getHeroSlice(me)) == false) then(
-            freeSlice(destinationMarker)
-            destinationMarker := 0
+        # Player Movement
+        if(destinationMarker) then(
+            # Either player is still moving, is blocked from moving, 
+            # or has reached destination
+            x := sliceX(getHeroSlice(me)) + (sliceWidth(getHeroSlice(me))/2) # Middle of hero slice
+            y := sliceY(getHeroSlice(me)) + sliceHeight(getHeroSlice(me))   # Bottom of hero slice
+            checkContinueMove(x, y)
         )
         
         # Doors
-        
+        # Check if player slice is colliding with a slice on interactCol with 
+        # the sli:door lookup code
+        sl := findCollidingSlice(interactCol, getHeroSlice(me), 0, true, false)
+        if(sl) then(
+            if(getSliceLookup(sl) == sli:door) then(
+                x := getSliceExtra(sl, extra1) # Store destination x in tiles
+                y := getSliceExtra(sl, extra2) # Store destination y in tiles
+                useDoor(getSliceExtra(sl, extra0)) # Store door id here
+                putHero(me, x*20, y*20)
+            )
+        )
         
         resetInputs()
        
@@ -136,6 +136,33 @@ script, mainGameLoop, begin
         lmbUp := false
         rmbUp := false
         escPress := false
+    end
+    
+    subscript, checkContinueMove, playerX, playerY, begin
+        # Checks if player is at the same place as last tick (stuck)
+        # or if the player has reached their destination
+        # Continue moving if able to and not at destination
+        if(oldPlayerX == -1 && oldPlayerY == -1) then(
+            # Set player's initial position: when they started moving
+            oldPlayerX := playerX
+            oldPlayerY := playerY
+        ) elseif(oldPlayerX == playerX && oldPlayerY == playerY) then(
+            # Stuck
+            oldPlayerX := -1, oldPlayerY := -1 # Reset old values
+            # Remove destination marker
+            freeSlice(destinationMarker)
+            destinationMarker := 0
+        ) elseif(abs((sliceX(destinationMarker) + 5) -- playerX) < move:speed+1
+        && abs((sliceY(destinationMarker) + 5) -- playerY) < move:speed+1
+        ) then(
+            # Reached Destination
+            
+        ) else(
+            # Move towards destination marker
+            x := (sliceX(destinationMarker) + 5) -- playerX # The center of the ellipse -- player x
+            y := (sliceY(destinationMarker) + 5) -- playerY # The center of the ellipse -- player y
+            movePlayer(x, y)
+        )
     end
 end
 

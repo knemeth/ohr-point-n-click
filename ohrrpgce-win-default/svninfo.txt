@@ -1,0 +1,13 @@
+Path: .
+Working Copy Root Path: C:\nightly\ohrrpgce
+URL: https://rpg.hamsterrepublic.com/source/wip
+Relative URL: ^/wip
+Repository Root: https://rpg.hamsterrepublic.com/source
+Repository UUID: 7d344553-34f0-0310-a9b1-970ce8f1c3a2
+Revision: 11943
+Node Kind: directory
+Schedule: normal
+Last Changed Author: teeemcee
+Last Changed Rev: 11943
+Last Changed Date: 2020-08-09 18:38:27 -0700 (Sun, 09 Aug 2020)
+
