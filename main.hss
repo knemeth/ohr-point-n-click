@@ -26,8 +26,11 @@ defineConstant, begin
     2,state:use
     3,state:talk
     # Movement values
-    4,move:speed
+    2,move:speed
     0,move:friction
+    # Player hitbox
+    10,player:width
+    10,player:height
 end
 
 plotscript, keypressHandler, begin
@@ -59,6 +62,7 @@ plotscript, newGame, begin
     initMouse
     unhideMouseCursor
     gameIsRunning := true
+    setSliceSize(getHeroSlice(me), player:width, player:height)
     hud := loadSliceCollection(0)
     mainGameLoop
 end
@@ -146,17 +150,20 @@ script, mainGameLoop, begin
             # Set player's initial position: when they started moving
             oldPlayerX := playerX
             oldPlayerY := playerY
-        ) elseif(oldPlayerX == playerX && oldPlayerY == playerY) then(
+            # Move towards destination marker
+            x := (sliceX(destinationMarker) + 5) -- playerX # The center of the ellipse -- player x
+            y := (sliceY(destinationMarker) + 5) -- playerY # The center of the ellipse -- player y
+            movePlayer(x, y)
+        ) elseif((oldPlayerX == playerX && oldPlayerY == playerY)
+        || (abs((sliceX(destinationMarker) + 5) -- playerX) < move:speed+1
+            && abs((sliceY(destinationMarker) + 5) -- playerY) < move:speed+1
+            )
+        ) then(
             # Stuck
             oldPlayerX := -1, oldPlayerY := -1 # Reset old values
             # Remove destination marker
             freeSlice(destinationMarker)
             destinationMarker := 0
-        ) elseif(abs((sliceX(destinationMarker) + 5) -- playerX) < move:speed+1
-        && abs((sliceY(destinationMarker) + 5) -- playerY) < move:speed+1
-        ) then(
-            # Reached Destination
-            
         ) else(
             # Move towards destination marker
             x := (sliceX(destinationMarker) + 5) -- playerX # The center of the ellipse -- player x

@@ -5,7 +5,7 @@
 script, clickMovePlayer, x, y, begin
     # Moves the player towards the target location
     # Will not pathfind around walls, simply move towards the target
-    movePlayer(x, y)
+    #movePlayer(x, y)
     # Create a circle marker at the destination
     if(destinationMarker) then(freeSlice(destinationMarker))
     destinationMarker := createEllipse(10, 10, 255)
@@ -21,6 +21,9 @@ script, movePlayer, x, y, begin
     # Otherwise, horiz is 0
     if(y < 0) then(vert := 0--move:speed) # moving up
     elseif(y > 0) then(vert := move:speed) # moving down
+    # Don't overstep value
+    if(abs(x) -- abs(horiz) < 0) then(horiz := x)
+    if(abs(y) -- abs(vert) < 0) then(vert := y)
     # Otherwise, vert is 0
     moveSliceWithWallchecking(getHeroSlice(me), horiz, vert, move:friction)
     updateNPCOrHeroFromSlice(getHeroSlice(me)) # Uses putHero to force player in right spot
