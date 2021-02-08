@@ -1,8 +1,10 @@
 # OHR Community Point & Click Adventure
 # movement.hss
-# created by kylekrack
+# file created by kylekrack
+# Has scripts for moving the hero
 
 script, clickMovePlayer, x, y, begin
+    # Called from lmbDownActions() in ui.hss
     # Moves the player towards the target location
     # Will not pathfind around walls, simply move towards the target
     #movePlayer(x, y)
@@ -13,6 +15,7 @@ script, clickMovePlayer, x, y, begin
 end
 
 script, movePlayer, x, y, begin
+    # Called from main loop in main.hss
     # Moves the player towards a target destination by move:speed pixels
     variable(horiz, vert)
     # Set moving left or right
@@ -21,10 +24,16 @@ script, movePlayer, x, y, begin
     # Otherwise, horiz is 0
     if(y < 0) then(vert := 0--move:speed) # moving up
     elseif(y > 0) then(vert := move:speed) # moving down
+    # Otherwise, vert is 0
+    if(horiz <> 0 && vert <> 0) then(
+        # Moving diagonally, 3/4 speed
+        horiz := (horiz * 3) / 4
+        vert := (vert * 3) / 4
+    )
     # Don't overstep value
     if(abs(x) -- abs(horiz) < 0) then(horiz := x)
     if(abs(y) -- abs(vert) < 0) then(vert := y)
-    # Otherwise, vert is 0
+
     moveSliceWithWallchecking(getHeroSlice(me), horiz, vert, move:friction)
     updateNPCOrHeroFromSlice(getHeroSlice(me)) # Uses putHero to force player in right spot
 end
