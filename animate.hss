@@ -1,0 +1,98 @@
+# OHR Community Point & Click Adventure
+# animate.hss
+# file created by kylekrack
+# Includes scripts for animating slices
+
+script, createAnimation, handle, duration, spd, begin
+    # Adds slice handle, handle, to a list of handles that animate automatically
+    # duration = how many ticks slice lasts before freeing itself (-1 for infinite)
+    # spd = how many ticks between each frame change
+    if(sliceIsSprite(handle) == false) then(
+        $0="slice handle is not a sprite"
+        scriptError(0)
+    )
+
+    variable(sl)
+
+    sl := createContainer(0,0)
+    setSliceExtra(sl, extra0, handle)
+    setSliceExtra(sl, extra1, duration)
+    setSliceExtra(sl, extra2, spd)
+
+    setParent(sl, animatingSlices)
+end
+
+script, animateSlices, begin
+    # Loops through each child of animatingSlices and applies animation properties
+    # Note: loops backwards through children in case children are freed during loop
+    variable(duration, spd, i, child, toAnimate, frame)
+
+    for(i, childCount(animatingSlices)--1, 0, -1) do(
+        # Check frame change/auto-freeing for each child of animatingSlices
+        child := sliceChild(animatingSlices, i)
+
+        duration := getSliceExtra(child, extra1)
+        spd := getSliceExtra(child, extra2)
+        toAnimate := getSliceExtra(child, extra0) # actual slice to animate
+
+        if(toAnimate == 0 || sliceIsValid(toAnimate) == false) then(
+            # Slice no longer exists
+            freeSlice(child)
+            continue
+        )
+
+        # Check/decrement duration
+        if(duration == 0) then(
+            # Duration has hit 0, animation over
+            freeSlice(toAnimate)
+            freeSlice(child)    # remove handle from animatingSlices
+            continue # skip to next slice
+        ) elseif(duration > 0) then(
+            # Not infinite, decrement duration
+            setSliceExtra(child, extra1, getSliceExtra(child, extra1)--1)
+        )
+        # Check frame timer
+        if(sliceX(child) == spd) then(
+            # increment, or loop to 0 if greater than frame count
+            frame := (getSpriteFrame(toAnimate)+1),mod,spriteFrameCount(toAnimate) 
+            setSpriteFrame(toAnimate, frame)
+            setSliceX(child, 0) # reset x
+        ) else(
+            setSliceX(child, sliceX(child)+1) # increment x until it reaches spd
+        )
+    )
+end
+
+script, animatePlayer, moving, begin
+    # Animate based on player movement and configuration settings
+    variable(sl, idle)
+
+    idle := config:heroidle
+    sl := getHeroSlice(0)
+
+    if(moving) then(
+        # Walking animate
+        if(getSliceExtra(sl, extra0) == config:walkSpeed) then(
+            # Toggle frame and reset extra data
+            if(heroFrame(0)) then(setHeroFrame(0, 0))
+            else(setHeroFrame(0, 1))
+            setSliceExtra(sl, extra0, 0)
+        ) else(
+            # increment extra0 until it reaches walkSpeed
+            setSliceExtra(sl, extra0, getSliceExtra(sl, extra0)+1)
+        )
+    ) elseif(idle) then(
+        # Idle animate
+        if(getSliceExtra(sl, extra0) == config:walkSpeed) then(
+            # Toggle frame and reset extra data
+            if(heroFrame(0)) then(setHeroFrame(0, 0))
+            else(setHeroFrame(0, 1))
+            setSliceExtra(sl, extra0, 0)
+        ) else(
+            # increment extra0 until it reaches walkSpeed
+            setSliceExtra(sl, extra0, getSliceExtra(sl, extra0)+1)
+        )
+    ) else(
+        setSliceExtra(sl, extra0, 0) # reset animation timer
+    )
+end

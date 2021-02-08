@@ -1,9 +1,21 @@
 # OHR Community Point & Click Adventure
 # main.hss
-# created by kylekrack
+# file created by kylekrack
+# Includes main game loop, keypress handler, and autorun scripts
 
 include, movement.hss
 include, ui.hss
+include, animate.hss
+
+# CONFIGURATION SETTINGS
+defineConstant, begin
+    0,config:heroidle       # whether heroes animate while not moving (1 = true)
+    -1,config:herosetidle   # walkabout sprite set to use when hero is still (-1 if using picture from custom)
+    -1,config:herosetmoving # walkabout sprite set to use when hero is moving (-1 if using picture from custom)
+    2,config:walkSpeed      # ticks between each frame while walking    
+    3,config:idleSpeed      # ticks between each frame while idling
+    3,config:markerSprite   # walkabout sprite set to use for the destinationMarker
+end
 
 globalVariable, begin
     0,lmbDown
@@ -17,6 +29,7 @@ globalVariable, begin
     8,interactCol           # Per-map slice collection that has interactive slices like Look and Door
     9,actionState
     10,destinationMarker     # To be replaced with a lookup code
+    11,animatingSlices      # A slice handle for a container that tracks animating slice handles
 end
 
 defineConstant, begin
@@ -64,12 +77,13 @@ plotscript, newGame, begin
     gameIsRunning := true
     setSliceSize(getHeroSlice(me), player:width, player:height)
     hud := loadSliceCollection(0)
+    animatingSlices := createContainer(0,0) # a list of animating slice handles
     mainGameLoop
 end
 
 script, mainGameLoop, begin
     # Runs every in-game tick, calls to functions from outside this file
-    variable(x, y, sl, oldPlayerX, oldPlayerY)
+    variable(x, y, sl, oldPlayerX, oldPlayerY, playerMoved)
     # Init old position to -1, to indicate no movement has ocurred
     oldPlayerX := -1
     oldPlayerY := -1
@@ -115,6 +129,10 @@ script, mainGameLoop, begin
             y := sliceY(getHeroSlice(me)) + sliceHeight(getHeroSlice(me))   # Bottom of hero slice
             checkContinueMove(x, y)
         )
+
+        # Animations
+        animatePlayer(playerMoved)
+        animateSlices()
         
         # Doors
         # Check if player slice is colliding with a slice on interactCol with 
@@ -151,12 +169,14 @@ script, mainGameLoop, begin
             oldPlayerX := playerX
             oldPlayerY := playerY
             # Move towards destination marker
-            x := (sliceX(destinationMarker) + 5) -- playerX # The center of the ellipse -- player x
-            y := (sliceY(destinationMarker) + 5) -- playerY # The center of the ellipse -- player y
+            x := (sliceX(destinationMarker) + (sliceWidth(destinationMarker)/2)) -- playerX # The center of the ellipse -- player x
+            y := (sliceY(destinationMarker) + (sliceHeight(destinationMarker)/2)) -- playerY # The center of the ellipse -- player y
             movePlayer(x, y)
-        ) elseif((oldPlayerX == playerX && oldPlayerY == playerY)
-        || (abs((sliceX(destinationMarker) + 5) -- playerX) < move:speed+1
-            && abs((sliceY(destinationMarker) + 5) -- playerY) < move:speed+1
+            playerMoved := true
+        ) elseif((oldPlayerX == playerX && oldPlayerY == playerY) ||
+            (
+                abs((sliceX(destinationMarker) + (sliceWidth(destinationMarker)/2)) -- playerX) < move:speed+1
+                && abs((sliceY(destinationMarker) + sliceHeight(destinationMarker)/2) -- playerY) < move:speed+1
             )
         ) then(
             # Stuck
@@ -164,11 +184,13 @@ script, mainGameLoop, begin
             # Remove destination marker
             freeSlice(destinationMarker)
             destinationMarker := 0
+            playerMoved := false
         ) else(
             # Move towards destination marker
-            x := (sliceX(destinationMarker) + 5) -- playerX # The center of the ellipse -- player x
-            y := (sliceY(destinationMarker) + 5) -- playerY # The center of the ellipse -- player y
+            x := (sliceX(destinationMarker) + (sliceWidth(destinationMarker)/2)) -- playerX # The center of the ellipse -- player x
+            y := (sliceY(destinationMarker) + (sliceHeight(destinationMarker)/2)) -- playerY # The center of the ellipse -- player y
             movePlayer(x, y)
+            playerMoved := true
         )
     end
 end
