@@ -34,6 +34,11 @@ script, movePlayer, x, y, begin
     # Don't overstep value
     if(abs(x) -- abs(horiz) < 0) then(horiz := x)
     if(abs(y) -- abs(vert) < 0) then(vert := y)
+    # Update hero direction
+    if(vert < 0) then(setHeroDirection(me, up))
+    elseif(vert > 0) then(setHeroDirection(me, down))
+    elseif(horiz < 0) then(setHeroDirection(me, left))
+    elseif(horiz > 0) then(setHeroDirection(me, right))
 
     moveSliceWithWallchecking(getHeroSlice(me), horiz, vert, move:friction)
     updateNPCOrHeroFromSlice(getHeroSlice(me)) # Uses putHero to force player in right spot
