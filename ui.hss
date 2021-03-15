@@ -14,17 +14,11 @@ end
 script, lmbDownActions, x, y, begin
     # Called from main game loop when lmb is pressed down
     variable(sl)
-    # Moving Player
+
     sl := sliceAtPixel(hud, x, y, 0, true, true) # Only get visible slices for HUD
     if(sl == false) then(
         # Not clicking on the hud, therefore clicking on the map
         switch(actionState) do(
-            case(state:walk) do(
-                # X and Y are relative to hero's current location
-                x := mousePixelX -- heroPixelX(me)
-                y := mousePixelY -- heroPixelY(me)
-                clickMovePlayer(x, y)
-            )
             case(else) do(
                 # Do nothing
             )
@@ -37,11 +31,17 @@ end
 script, lmbUpActions, x, y, begin
     # Called from main game loop when lmb is released
     variable(sl)
-    # HUD interactions
+    
     sl := sliceAtPixel(hud, x, y, 0, true, true) # Only get visible slices for HUD
     if(sl == false) then(
         # Not clicking on the hud, therefore clicking on the map
         switch(actionState) do(
+            case(state:walk) do(
+                # X and Y are relative to hero's current location
+                x := mousePixelX -- heroPixelX(me)
+                y := mousePixelY -- heroPixelY(me)
+                clickMovePlayer(x, y)
+            )
             case(state:look) do(
                 sl := sliceAtPixel(interactCol, x, y, 0, true, false) # Find interactive slice
                 if(getSliceLookup(sl) == sli:look) then(
