@@ -1,0 +1,16 @@
+# OHR Community Point & Click Adventure
+# util.hss
+# file created by kylekrack
+# Contains utility scripts not likely needed to be altered by user
+
+script, checkPlayerAtMarker, playerX, playerY, begin
+	# Checks if the player's position is overlapping with the destination marker 
+	if(
+		abs((sliceX(destinationMarker) + (sliceWidth(destinationMarker)/2)) -- playerX) < move:speed+1
+    	&& abs((sliceY(destinationMarker) + sliceHeight(destinationMarker)/2) -- playerY) < move:speed+1
+    ) then(
+    	exitReturning(true)
+    ) else(
+    	exitReturning(false)
+    )
+end

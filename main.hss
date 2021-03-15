@@ -6,6 +6,7 @@
 include, movement.hss
 include, ui.hss
 include, animate.hss
+include, util.hss
 
 # CONFIGURATION SETTINGS
 defineConstant, begin
@@ -83,14 +84,20 @@ end
 
 script, mainGameLoop, begin
     # Runs every in-game tick, calls to functions from outside this file
-    variable(x, y, sl, oldPlayerX, oldPlayerY, playerMoved)
+    variable(x, y, sl, oldPlayerX, oldPlayerY, lastPlayerX, lastPlayerY, playerMoved)
     # Init old position to -1, to indicate no movement has ocurred
     oldPlayerX := -1
     oldPlayerY := -1
    
     while(gameIsRunning) do(
+        # Actions within a subscript to allow for mid-game recompiling
+        loopContents()
+        wait
+    )
+
+    subscript, loopContents, begin
+        # Mouse
         x := mousePixelX, y := mousePixelY
-        # Mouse Hover
         mouseHover(x, y)
         
         # Check Paused: everything after this will be skipped if game is paused
@@ -146,11 +153,17 @@ script, mainGameLoop, begin
                 putHero(me, x*20, y*20)
             )
         )
+
+        # Debug
+        if(readPreferenceBit(8) == false) then(
+            # Debug keys enabled
+            showStringAt(0, 0, 0), showStringAt(1, 0, 10), showStringAt(2, 0, 20), showStringAt(3, 0, 30)
+        ) else(
+            showNoValue()
+        )
         
         resetInputs()
-       
-        wait
-    )
+    end
     
     subscript, resetInputs, begin
         lmbDown := false
@@ -158,6 +171,9 @@ script, mainGameLoop, begin
         lmbUp := false
         rmbUp := false
         escPress := false
+        if(readPreferenceBit(8) == false) then(
+            clearString(0), clearString(1), clearString(2), clearString(3)
+        )
     end
     
     subscript, checkContinueMove, playerX, playerY, begin
@@ -168,18 +184,16 @@ script, mainGameLoop, begin
             # Set player's initial position: when they started moving
             oldPlayerX := playerX
             oldPlayerY := playerY
+            # Set most recent player position
+            lastPlayerX := playerX
+            lastPlayerY := playerY
             # Move towards destination marker
             x := (sliceX(destinationMarker) + (sliceWidth(destinationMarker)/2)) -- playerX # The center of the ellipse -- player x
             y := (sliceY(destinationMarker) + (sliceHeight(destinationMarker)/2)) -- playerY # The center of the ellipse -- player y
             movePlayer(x, y)
             playerMoved := true
-        ) elseif((oldPlayerX == playerX && oldPlayerY == playerY) ||
-            (
-                abs((sliceX(destinationMarker) + (sliceWidth(destinationMarker)/2)) -- playerX) < move:speed+1
-                && abs((sliceY(destinationMarker) + sliceHeight(destinationMarker)/2) -- playerY) < move:speed+1
-            )
-        ) then(
-            # Stuck
+        ) elseif((lastPlayerX == playerX && lastPlayerY == playerY) || checkPlayerAtMarker(playerX, playerY)) then(
+            # Stuck or reached destination
             oldPlayerX := -1, oldPlayerY := -1 # Reset old values
             # Remove destination marker
             freeSlice(destinationMarker)
@@ -187,6 +201,8 @@ script, mainGameLoop, begin
             playerMoved := false
         ) else(
             # Move towards destination marker
+            lastPlayerX := playerX
+            lastPlayerY := playerY
             x := (sliceX(destinationMarker) + (sliceWidth(destinationMarker)/2)) -- playerX # The center of the ellipse -- player x
             y := (sliceY(destinationMarker) + (sliceHeight(destinationMarker)/2)) -- playerY # The center of the ellipse -- player y
             movePlayer(x, y)
